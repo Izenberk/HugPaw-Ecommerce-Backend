@@ -1,0 +1,31 @@
+{
+  "name": "hug-paw-backend",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/Izenberk/HugPaw-Ecommerce-Backend#readme",
+  "bugs": {
+    "url": "https://github.com/Izenberk/HugPaw-Ecommerce-Backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Izenberk/HugPaw-Ecommerce-Backend.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.18.0"
+  }
+}
