@@ -17,7 +17,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "docker:build": "docker build -t hugpaw-api .",
+    "docker:run": "docker run --rm --env-file .env -p 3030:3030 hugpaw-api",
+    "docker:dev": "npm run docker:build && npm run docker:run"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
