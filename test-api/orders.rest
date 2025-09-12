@@ -1,0 +1,68 @@
+@port=localhost:3030
+@id=68c440ed88d0c805eb3b6c1c
+
+### Create a new order
+POST http://{{port}}/orders
+Content-Type: application/json
+
+{
+  "order_no": "ORD-1001",
+  "userId": "user-001",
+  "order_items": [
+    {
+      "productRef": "68c43db9a2053ca903b5c1ac",
+      "sku": "COL-BLK-XS",
+      "quantity": 2,
+      "unitPrice": 330,
+      "attributes": [
+        { "k": "Type", "v": "Collar" },
+        { "k": "Size", "v": "XS" },
+        { "k": "Color", "v": "Black" }
+      ],
+      "smartFeatures": [
+        {
+          "productRef": "68c43dcda2053ca903b5c1ae",
+          "sku": "SMF-GPS",
+          "quantity": 1,
+          "unitPrice": 50,
+          "attributes": [
+            { "k": "Type", "v": "Collar" }
+          ]
+        }
+      ]
+    }
+  ],
+  "orderTotalQty": 3,
+  "orderLineCount": 1,
+  "orderTotalAmount": 710,
+  "orderStatus": "Waiting for payment",
+  "shipping": {
+    "name": "ABC",
+    "address": "Bangkok, Thailand",
+    "phone": "0812345678"
+  },
+  "payment": {
+    "method": "Credit Card"
+  }
+}
+
+
+### Get all orders
+GET http://{{port}}/orders
+
+### Get order by _id
+GET http://{{port}}/orders/{{id}}
+
+### Delete order by _id
+DELETE http://{{port}}/orders/{{id}}
+
+### Update order by _id
+PATCH http://{{port}}/orders/{{id}}
+Content-Type: application/json
+
+{
+  "orderStatus": "Processing",
+}
+
+
+

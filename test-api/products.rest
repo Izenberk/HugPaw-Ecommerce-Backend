@@ -1,0 +1,48 @@
+@port=localhost:3030
+@id=68c43babe1714be0eeae12c6
+
+
+# POST http://localhost:3030/products
+# Content-Type: application/json
+
+# {
+#     "sku":"COL-BLK-XS",
+#     "attributes": [
+#       { "k": "Type", "v": "Collar" },
+#       { "k": "Size", "v": "XS" },
+#       { "k": "Color", "v": "Black" }],
+#     "unitPrice": 330,
+#     "stockAmount": 150
+# }
+
+POST http://localhost:3030/products
+Content-Type: application/json
+
+{
+    "sku":"SMF-GPS",
+    "attributes": [
+      { "k": "Type", "v": "Collar" }],
+    "basePrice": 350,
+    "stockAmount": 100
+}
+
+
+
+
+### get all products
+GET http://localhost:3030/products
+
+
+### get product by id
+GET http://localhost:3030/products/{{id}}
+
+### delete product by id
+DELETE http://localhost:3030/products/{{id}}
+
+### update product by id
+PATCH http://localhost:3030/products/{{id}}
+Content-Type: application/json
+
+{
+  "unitPrice": 350
+}
