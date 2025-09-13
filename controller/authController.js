@@ -17,7 +17,7 @@ function setAuthCookie(res, token) {
     secure: isProd,
     sameSite: isProd ? "none" : "lax",
     path: "/",
-    maxAge: 1 * 24 * 60 * 60 * 1000,
+    maxAge: 24 * 60 * 60 * 1000,
   });
 }
 
@@ -48,6 +48,7 @@ export const signUp = async (req, res, next) => {
     });
 
     const token = signToken({ userId: user._id, role: user.role });
+
     setAuthCookie(res, token);
 
     user.lastLoginAt = new Date();
@@ -85,17 +86,18 @@ export const login = async (req, res, next) => {
         .status(401)
         .json({ error: true, message: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, user.password);
-    if (!ok)
+    const matchData = await bcrypt.compare(password, user.password);
+    if (!matchData)
       return res
         .status(401)
         .json({ error: true, message: "Invalid credentials" });
 
-    const token = signToken({ userId: user._id, role: user.role });
+    const token = signToken(
+      { userId: user._id, role: user.role },
+      process.env.JWT_SECRET
+    );
+    
     setAuthCookie(res, token);
-
-    user.lastLoginAt = new Date();
-    await user.save({ validateBeforeSave: false });
 
     res.json({
       error: false,
@@ -130,7 +132,7 @@ export const logOut = async (req, res, next) => {
 
 export const getCurrentUser = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.userId).select("-password");
+    const user = await User.findById(req.user._id).select("-password");
     if (!user)
       return res.status(404).json({ error: true, message: "User not found" });
     res.json({ error: false, user });

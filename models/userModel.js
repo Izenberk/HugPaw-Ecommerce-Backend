@@ -33,6 +33,20 @@ UserSchema.pre("save", async function (next) {
   } catch (err) {
     next(err);
   }
+  const update = this.getUpdate() || {};
+  if (update.password) {
+    update.password = await bcrypt.hash(update.password, 10);
+    this.setUpdate(update);
+  }
+  next();
+
+  UserSchema.pre("findOneAndUpdate", async function (next) {
+    const update = this.getUpdate() || {};
+    if (update.password) {
+      update.password = await bcrypt.hash(update.password, 10);
+      this.setUpdate(update);
+    }
+  });
 });
 
 UserSchema.methods.comparePassword = async function (userPassword) {

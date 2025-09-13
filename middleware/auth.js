@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
+
 export async function requireAuth(req, res, next) {
   try {
     const bearer = req.headers.authorization?.split(" ")[1];

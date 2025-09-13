@@ -1,51 +1,13 @@
 import User from "../models/userModel.js";
 
-//Create a new user
+// Get profile by Id
+export const getUserById = async (req, res, next) => {};
 
-export const getAllUsers = async (req, res) => {
-  try {
-    // exclude passwords in the result
-    const users = await User.find().select("-password").sort("-createdAt");
-    res.json({ error: false, users });
-  } catch (err) {
-    res.status(500).json({
-      error: true,
-      message: "Failed to fetch users",
-      details: err.message,
-    });
-  }
-};
+//Edit profile by Id
+export const editUserById = async (req, res, next) => {};
 
-export const createUser = async (req, res) => {
-  const { name, email } = req.body;
+//Soft delete profile by userId
+export const softDeleteUserById = async (req, res, next) => {};
 
-  if (!name) {
-    return res.status(400).json({ error: true, message: "Name is required" });
-  }
-
-  if (!email) {
-    return res.status(400).json({ error: true, message: "Email is required" });
-  }
-
-  try {
-    // prevent duplicates
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res
-        .status(409)
-        .json({ error: true, message: "Email already in use" });
-    }
-
-    // create & save
-    const user = new User({ name, email });
-    await user.save();
-
-    return res
-      .status(201)
-      .json({ error: false, user, message: "User created successfully" });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ error: true, message: "Server error", details: err.message });
-  }
-};
+//Hard delete User by ID
+export const hardDeleteUserById = async (req, res, next) => {};

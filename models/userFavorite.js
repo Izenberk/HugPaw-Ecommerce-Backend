@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 const { Schema, model } = mongoose;
 
-const WishlistSchema = new Schema({
+const FavoriteSchema = new Schema({
   userId: {
     type: Schema.Types.ObjectId,
     ref: "User",
@@ -15,4 +15,4 @@ const WishlistSchema = new Schema({
   price: { type: Number },
 });
 
-export default model("Wishlist", WishlistSchema);
+export default model("Favorite", FavoriteSchema);

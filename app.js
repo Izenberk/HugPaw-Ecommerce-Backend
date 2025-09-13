@@ -6,7 +6,9 @@ import cookieParser from "cookie-parser";
 import { routeNotFound } from "./middleware/routeNotFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import healthRoutes from "./api/v1/routes/health.routes.js";
-import authRouter from "./api/v1/routes/auth.js";
+
+import authRouter from "./api/v1/routes/auth.js"
+import userCartRouter from "./api/v1/routes/cart.js";
 
 dotenv.config();
 
@@ -17,6 +19,8 @@ const corsOption = {
     "http://localhost:5174",
     "http://localhost:5175",
   ],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 // CORS middleware
@@ -33,6 +37,7 @@ app.use(healthRoutes);
 
 // Routes
 app.use(authRouter);
+app.use(userCartRouter);
 
 // Error Handlers
 app.use(routeNotFound);
