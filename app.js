@@ -32,7 +32,7 @@ app.use(cookieParser());
 app.use(healthRoutes);
 
 // Routes
-app.use("/api/v1/auth", authRouter);
+app.use(authRouter);
 
 // Error Handlers
 app.use(routeNotFound);

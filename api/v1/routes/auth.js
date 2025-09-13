@@ -10,11 +10,11 @@ import { requireAuth, requireAdmin } from "../../../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/signup", signUp);
-router.post("/login", login);
-router.post("/logout", requireAuth, logOut);
-router.get("/me", requireAuth, getCurrentUser);
-router.get("/admin/ping", requireAuth, requireAdmin, (req, res) => {
+router.post("/api/v1/auth/signup", signUp);
+router.post("/api/v1/auth/login", login);
+router.post("/api/v1/auth/logout", requireAuth, logOut);
+router.get("/api/v1/auth/me", requireAuth, getCurrentUser);
+router.get("/api/v1/auth/admin/ping", requireAuth, requireAdmin, (req, res) => {
   res.json({ error: false, message: "Hello Admin" });
 });
 
