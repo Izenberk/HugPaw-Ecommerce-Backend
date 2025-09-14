@@ -2,10 +2,12 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import User from "../models/userModel.js";
 
-// JWT token and cookie helpers
 const isProd = process.env.NODE_ENV === "production";
 
 function signToken(payload) {
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET is not defined in environment variables");
+  }
   return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || "1d",
   });
@@ -21,11 +23,9 @@ function setAuthCookie(res, token) {
   });
 }
 
-// User controllers
 export const signUp = async (req, res, next) => {
   try {
     const { email, password, firstName, lastName } = req.body;
-
     if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({
         error: true,
@@ -40,15 +40,9 @@ export const signUp = async (req, res, next) => {
         .json({ error: true, message: "Email already registered" });
     }
 
-    const user = await User.create({
-      email,
-      password,
-      firstName,
-      lastName,
-    });
+    const user = await User.create({ email, password, firstName, lastName });
 
     const token = signToken({ userId: user._id, role: user.role });
-
     setAuthCookie(res, token);
 
     user.lastLoginAt = new Date();
@@ -67,6 +61,7 @@ export const signUp = async (req, res, next) => {
       },
     });
   } catch (err) {
+    console.error("SignUp error:", err);
     next(err);
   }
 };
@@ -74,30 +69,31 @@ export const signUp = async (req, res, next) => {
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-
-    if (!email || !password)
+    if (!email || !password) {
       return res
         .status(400)
         .json({ error: true, message: "email and password are required" });
+    }
 
     const user = await User.findOne({ email, isDeleted: { $ne: true } });
-    if (!user)
+    if (!user || !user.password) {
       return res
         .status(401)
         .json({ error: true, message: "Invalid credentials" });
+    }
 
     const matchData = await bcrypt.compare(password, user.password);
-    if (!matchData)
+    if (!matchData) {
       return res
         .status(401)
         .json({ error: true, message: "Invalid credentials" });
+    }
 
-    const token = signToken(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET
-    );
-    
+    const token = signToken({ userId: user._id, role: user.role });
     setAuthCookie(res, token);
+
+    user.lastLoginAt = new Date();
+    await user.save({ validateBeforeSave: false });
 
     res.json({
       error: false,
@@ -112,6 +108,7 @@ export const login = async (req, res, next) => {
       },
     });
   } catch (err) {
+    console.error("Login error:", err);
     next(err);
   }
 };
@@ -126,17 +123,25 @@ export const logOut = async (req, res, next) => {
     });
     res.json({ error: false, message: "Signed out" });
   } catch (err) {
+    console.error("Logout error:", err);
     next(err);
   }
 };
 
 export const getCurrentUser = async (req, res, next) => {
   try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: true, message: "Unauthorized" });
+    }
+
     const user = await User.findById(req.user._id).select("-password");
-    if (!user)
+    if (!user) {
       return res.status(404).json({ error: true, message: "User not found" });
+    }
+
     res.json({ error: false, user });
   } catch (err) {
+    console.error("getCurrentUser error:", err);
     next(err);
   }
 };

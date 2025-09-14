@@ -7,7 +7,9 @@ import { routeNotFound } from "./middleware/routeNotFound.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import healthRoutes from "./api/v1/routes/health.routes.js";
 
-import authRouter from "./api/v1/routes/auth.js"
+import authRouter from "./api/v1/routes/auth.js";
+import userRouter from "./api/v1/routes/user.js";
+import adminRouter from "./api/v1/routes/admin.js";
 import userCartRouter from "./api/v1/routes/cart.js";
 
 dotenv.config();
@@ -37,6 +39,8 @@ app.use(healthRoutes);
 
 // Routes
 app.use(authRouter);
+app.use(userRouter);
+app.use(adminRouter);
 app.use(userCartRouter);
 
 // Error Handlers

@@ -18,7 +18,7 @@ const router = express.Router();
 router.post("/api/v1/auth/signup", signUp);
 
 // User login
-router.post("/api/v1/auth/login", requireAuth, requireAuthUser, login);
+router.post("/api/v1/auth/login", login);
 
 // User logout
 router.post("/api/v1/auth/logout", requireAuth, requireAuthUser, logOut);
@@ -26,7 +26,7 @@ router.post("/api/v1/auth/logout", requireAuth, requireAuthUser, logOut);
 // Get current user
 router.get("/api/v1/auth/me", requireAuth, requireAuthUser, getCurrentUser);
 
-// Admin only route
+// Admin only route (test)
 router.get(
   "/api/v1/auth/admin",
   requireAuth,
