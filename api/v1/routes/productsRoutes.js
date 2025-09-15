@@ -7,21 +7,22 @@ import{
     deleteProduct
 } from '../../controller/productsController.js'
 
-const router = Router()
+const router = Router();
 
-// Create a new product
-router.post('/products', createProduct)
+// Create
+router.post("/products", createProduct);
 
-// Get all products
-router.get('/products', getProducts)
+// List (supports ?q=, ?attr[Type]=Collar, ?sort=-updatedAt)
+router.get("/products", getProducts);
 
-// Get product by id
-router.get('/products/:id', getProductById)
+// Read
+router.get("/products/:id", getProductById);
 
-// Update product by id
-router.patch('/products/:id', updateProduct)
+// Update (partial by default). Keep PATCH, and also expose PUT as an alias.
+router.patch("/products/:id", updateProduct);
+router.put("/products/:id", updateProduct);
 
-// Delete product by id
-router.delete('/products/:id', deleteProduct)
+// Delete (hard delete)
+router.delete("/products/:id", deleteProduct);
 
-export default router
+export default router;

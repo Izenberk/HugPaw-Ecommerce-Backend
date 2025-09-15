@@ -18,6 +18,10 @@ const corsOption = {
     "http://localhost:5174",
     "http://localhost:5175",
   ],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  credentials: true,           // needed for cookies / auth headers
+  optionsSuccessStatus: 204,   // for legacy browsers on preflight
 };
 
 // CORS middleware
@@ -33,7 +37,7 @@ app.use(cookieParser());
 app.use(healthRoutes);
 
 // Routes
-app.use(productsRoutes);
+app.use("/api", productsRoutes);
 app.use(ordersRoutes);
 
 // Error Handlers
