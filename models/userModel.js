@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import { AddressSchema } from "./address.js";
 
 const { Schema, model } = mongoose;
 
@@ -47,7 +46,6 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
-/** Hash ตอน save เฉพาะเมื่อ password ถูกแก้ไข */
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   try {

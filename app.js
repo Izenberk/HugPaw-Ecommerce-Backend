@@ -9,8 +9,6 @@ import healthRoutes from "./api/v1/routes/health.routes.js";
 
 import authRouter from "./api/v1/routes/auth.js";
 import userRouter from "./api/v1/routes/user.js";
-import adminRouter from "./api/v1/routes/admin.js";
-import userCartRouter from "./api/v1/routes/cart.js";
 
 dotenv.config();
 
@@ -22,7 +20,7 @@ const corsOption = {
     "http://localhost:5175",
   ],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
 };
 
 // CORS middleware
@@ -40,8 +38,6 @@ app.use(healthRoutes);
 // Routes
 app.use(authRouter);
 app.use(userRouter);
-app.use(adminRouter);
-app.use(userCartRouter);
 
 // Error Handlers
 app.use(routeNotFound);
