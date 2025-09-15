@@ -38,10 +38,10 @@ router.delete(
   hardDeleteUserById
 );
 
-// Forget password
-router.post("/api/v1/users/forgot-password", forgetPassword);
+// // Forget password
+// router.post("/api/v1/users/forgot-password", forgetPassword);
 
-// reset password
-router.post("/api/v1/users/forgot-password", resetPassword);
+// // reset password
+// router.post("/api/v1/users/forgot-password", resetPassword);
 
 export default router;
