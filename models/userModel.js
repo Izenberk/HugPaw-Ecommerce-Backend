@@ -5,7 +5,7 @@ const { Schema, model } = mongoose;
 
 export const AddressSchema = new Schema(
   {
-    fullName: { type: String, trim: true },
+    recieverName: { type: String, trim: true },
     phone: { type: String, required: true, trim: true },
     addressLine1: { type: String, required: true, trim: true },
     district: { type: String, trim: true },
@@ -46,7 +46,6 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
-/** Hash ตอน save เฉพาะเมื่อ password ถูกแก้ไข */
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   try {

@@ -2,6 +2,8 @@ import express from "express";
 import {
   getUserById,
   editUserById,
+  forgetPassword,
+  resetPassword,
   softDeleteUserById,
   hardDeleteUserById,
 } from "../../../controller/userController.js";
@@ -22,7 +24,7 @@ router.put("/api/v1/users/:id", requireAuth, requireAuthUser, editUserById);
 
 // Soft delete user (user or admin)
 router.delete(
-  "/api/v1/users/:id/soft",
+  "/api/v1/users/soft/:id",
   requireAuth,
   requireAuthUser,
   softDeleteUserById
@@ -36,10 +38,10 @@ router.delete(
   hardDeleteUserById
 );
 
-// // Forget password
-// router.post("/api/v1/users/forgot-password", forgetPassword);
+// Forget password
+router.post("/api/v1/users/forgot-password", forgetPassword);
 
-// // reset password
-// router.post("/api/v1/users/forgot-password", resetPassword);
+// reset password
+router.post("/api/v1/users/forgot-password", resetPassword);
 
 export default router;

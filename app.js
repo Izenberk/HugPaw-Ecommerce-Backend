@@ -8,6 +8,8 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import healthRoutes from "./api/v1/routes/health.routes.js";
 import productsRoutes from "./api/v1/routes/productsRoutes.js";
 import ordersRoutes from "./api/v1/routes/ordersRoutes.js";
+import authRouter from "./api/v1/routes/auth.js";
+import userRouter from "./api/v1/routes/user.js";
 
 dotenv.config();
 
@@ -38,6 +40,8 @@ app.use(cookieParser());
 app.use(healthRoutes);
 
 // Routes
+app.use(authRouter);
+app.use(userRouter);
 app.use("/api", productsRoutes);
 app.use(ordersRoutes);
 
