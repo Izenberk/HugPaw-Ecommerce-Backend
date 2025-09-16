@@ -38,9 +38,6 @@ app.use(cookieParser());
 app.use(healthRoutes);
 
 // Routes
-app.use(authRouter);
-app.use(userRouter);
-app.use(adminRouter);
 app.use("/api", productsRoutes);
 app.use(ordersRoutes);
 

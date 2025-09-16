@@ -81,7 +81,6 @@ const OrderSchema = new Schema(
 );
 
 // Indexes
-OrderSchema.index({ order_no: 1 }, { unique: true });
 OrderSchema.index({ userId: 1, order_date: -1 });
 OrderSchema.index({ orderStatus: 1, order_date: -1 });
 OrderSchema.index({ orderStatus: 1, "payment.paymentStatus": 1 });
@@ -91,6 +90,6 @@ OrderSchema.index(
   { orderStatus: 1, "shipping.shippedAt": 1 },
   { partialFilterExpression: { "shipping.shippedAt": null } }
 );
-OrderSchema.index({ "order_items.sku": 1 });
+
 
 export const Order = model("Order", OrderSchema);
