@@ -9,6 +9,22 @@ const isDup = (e, key) => e?.code === 11000 && e?.keyPattern?.[key];
 
 function escRe(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
+const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+
+async function getProductByParam(idOrSlug) {
+  const q = isValidObjectId(idOrSlug)
+    ? { _id: idOrSlug }
+    : { slug: String(idOrSlug).trim().toLowerCase() };
+  return Product.findOne(q).lean();
+}
+
+const hasAttr = (k, v) => ({ attributes: { $elemMatch: { k, v } } });
+
+// Find the anchor doc by SKU
+async function getAnchor(sku) {
+  return Product.findOne({ sku }).select({ sku: 1, attributes: 1 }).lean();
+}
+
 /* ---------------------- filters: case-insensitive ---------------------- */
 function buildAttrFilters(q) {
   const and = [];
@@ -221,3 +237,257 @@ export const deleteProduct = async (req, res) => {
     res.status(500).json({ error: true, message: err.message });
   }
 };
+
+/* ----------------- Availability ----------------- */
+// POST /api/products/:id/availability
+export async function availability(req, res) {
+  try {
+    const product = await getProductByParam(req.params.id);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+
+    const selections = req.body?.selections || {};
+
+    // Pull in-stock + active variants for this product
+    const variants = await Variant.find({
+      productId: product._id,
+      stock: { $gt: 0 },
+      $or: [{ active: { $exists: false } }, { active: { $ne: false } }],
+    })
+      .select({ attrs: 1 })
+      .lean();
+
+    // Keep only variants compatible with current partial selections
+    const matches = variants.filter((v) =>
+      Object.entries(selections).every(([k, val]) =>
+        !val ? true : v.attrs?.[k] === val
+      )
+    );
+
+    // Build availability per option group using the product's declared options
+    const byOption = {};
+    for (const g of product.optionGroups || []) {
+      const set = new Set();
+      for (const v of matches) {
+        const val = v.attrs?.[g.key];
+        if (val) set.add(val);
+      }
+      byOption[g.key] = (g.values || []).map(({ value }) => ({
+        value,
+        available: set.has(value),
+      }));
+    }
+
+    res.json({ byOption });
+  } catch (err) {
+    console.error("availability error:", err);
+    res.status(500).json({ error: "Internal error" });
+  }
+}
+
+/* ----------------- Find exact variant ----------------- */
+// POST /api/products/:id/variants:find
+export async function findVariant(req, res) {
+  try {
+    const product = await getProductByParam(req.params.id);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+
+    const selections = req.body?.selections || {};
+
+    // Which singles are required to uniquely identify a variant?
+    const requiredSingles = (product.optionGroups || [])
+      .filter((g) => g.required && g.type === "single")
+      .map((g) => g.key);
+
+    // Must have all required singles specified
+    const allFilled = requiredSingles.every((k) => selections[k]);
+    if (!allFilled) return res.status(400).json({ found: false, error: "Incomplete selections" });
+
+    // Query by attrs.* exact match for required singles
+    const attrsQuery = requiredSingles.reduce((acc, k) => {
+      acc[`attrs.${k}`] = selections[k];
+      return acc;
+    }, {});
+
+    const v = await Variant.findOne({
+      productId: product._id,
+      ...attrsQuery,
+      $or: [{ active: { $exists: false } }, { active: { $ne: false } }],
+    })
+      .select({ sku: 1, price: 1, stock: 1, availableQty: 1, attrs: 1, image: 1 })
+      .lean();
+
+    if (!v) return res.status(404).json({ found: false });
+
+    res.json({
+      found: true,
+      sku: v.sku,
+      price: v.price,
+      stock: v.stock,
+      availableQty: v.availableQty,
+      attrs: v.attrs,
+      image: v.image,
+    });
+  } catch (err) {
+    console.error("findVariant error:", err);
+    res.status(500).json({ error: "Internal error" });
+  }
+}
+
+// Build a query that returns "siblings" (same product family) w/o schema changes
+function familyPredicateFromAnchor(anchor) {
+  if (!anchor) return null;
+
+  const attrs = Object.fromEntries((anchor.attributes || []).map(a => [a.k, a.v]));
+  const type = attrs["Type"];                       // e.g., "Collar"
+  const kindFilter = hasAttr("Kind", "Variant");
+
+  // Fallback family: SKU prefix before first '-'
+  const prefix = String(anchor.sku).split("-")[0];  // "COL"
+  const prefixFilter = { sku: { $regex: `^${prefix}-` } };
+
+  // Prefer narrowing by Type if present (to avoid mixing different product types)
+  if (type) {
+    return { $and: [ kindFilter, hasAttr("Type", type), prefixFilter ] };
+  }
+  return { $and: [ kindFilter, prefixFilter ] };
+}
+
+function attrsToObj(arr = []) {
+  return Object.fromEntries(arr.map(a => [a.k, a.v]));
+}
+
+// POST /api/variants/:sku/availability
+export async function variantAvailability(req, res) {
+  try {
+    const { sku } = req.params;
+    const anchor = await getAnchor(sku);
+    if (!anchor) return res.status(404).json({ error: "Anchor SKU not found" });
+
+    const familyQ = familyPredicateFromAnchor(anchor);
+    if (!familyQ) return res.status(404).json({ error: "Family not found" });
+
+    const selections = req.body?.selections || {};
+
+    // Candidates that are in stock
+    const base = { $and: [ familyQ, { stockAmount: { $gt: 0 } } ] };
+
+    // Apply partial selections (each becomes an $elemMatch(k,v))
+    const sel = Object.entries(selections)
+      .filter(([, v]) => v != null && v !== "")
+      .map(([k, v]) => hasAttr(k, v));
+
+    const matches = await Product.find({ $and: [base, ...sel] })
+      .select({ attributes: 1 })
+      .lean();
+
+    // Universe = all family variants (to list all values we’ve seen)
+    const allFamily = await Product.find(familyQ)
+      .select({ attributes: 1 })
+      .lean();
+
+    // Collect option keys/values by “varies across family”
+    const allValues = new Map(); // key -> Set(values)
+    for (const d of allFamily) {
+      for (const a of d.attributes || []) {
+        if (a.k === "Kind") continue;
+        const s = allValues.get(a.k) || new Set();
+        s.add(a.v);
+        allValues.set(a.k, s);
+      }
+    }
+
+    // Seen values that remain possible under current partial selections
+    const seen = new Map();
+    for (const d of matches) {
+      for (const a of d.attributes || []) {
+        if (a.k === "Kind") continue;
+        const s = seen.get(a.k) || new Set();
+        s.add(a.v);
+        seen.set(a.k, s);
+      }
+    }
+
+    // Compose byOption: unknown values → available:false
+    const byOption = {};
+    for (const [k, setAll] of allValues.entries()) {
+      const availSet = seen.get(k) || new Set();
+      byOption[k] = Array.from(setAll).map(v => ({
+        value: v,
+        available: availSet.has(v),
+      }));
+    }
+
+    res.json({ byOption });
+  } catch (e) {
+    console.error("variantAvailability error:", e);
+    res.status(500).json({ error: "Internal error" });
+  }
+}
+
+// POST /api/variants/:sku/resolve
+export async function resolveVariant(req, res) {
+  try {
+    const { sku } = req.params;
+    const anchor = await getAnchor(sku);
+    if (!anchor) return res.status(404).json({ found: false });
+
+    const familyQ = familyPredicateFromAnchor(anchor);
+    if (!familyQ) return res.status(404).json({ found: false });
+
+    const selections = req.body?.selections || {};
+    const requiredPairs = Object.entries(selections)
+      .filter(([, v]) => v != null && v !== "");
+    if (!requiredPairs.length) {
+      return res.status(400).json({ found: false, error: "Incomplete selections" });
+    }
+
+    const selectors = requiredPairs.map(([k, v]) => hasAttr(k, v));
+
+    const doc = await Product.findOne({ $and: [ familyQ, ...selectors ] })
+      .select({ sku: 1, unitPrice: 1, stockAmount: 1, attributes: 1 })
+      .lean();
+
+    if (!doc) return res.status(404).json({ found: false });
+
+    res.json({
+      found: true,
+      sku: doc.sku,
+      price: doc.unitPrice,
+      stock: doc.stockAmount,
+      attrs: attrsToObj(doc.attributes),
+    });
+  } catch (e) {
+    console.error("resolveVariant error:", e);
+    res.status(500).json({ error: "Internal error" });
+  }
+}
+
+// POST /api/inventory/availability
+// body: { skus: ["ACC-GPS-STD","ACC-LED-CLIP"] }
+export async function inventoryAvailability(req, res) {
+  try {
+    const skus = Array.isArray(req.body?.skus) ? req.body.skus : [];
+    if (!skus.length) return res.json({ items: [] });
+
+    const docs = await Product.find({ sku: { $in: skus } })
+      .select({ sku: 1, stockAmount: 1 })
+      .lean();
+
+    const found = new Map(docs.map(d => [d.sku, d]));
+    const items = skus.map(sku => {
+      const d = found.get(sku);
+      const stock = Number(d?.stockAmount);
+      const finite = Number.isFinite(stock);
+      return {
+        sku,
+        stock: finite ? stock : null,      // null → unknown/unlimited
+        available: finite ? stock > 0 : true,
+      };
+    });
+
+    res.json({ items });
+  } catch (e) {
+    console.error("inventoryAvailability error:", e);
+    res.status(500).json({ error: "Internal error" });
+  }
+}

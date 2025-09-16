@@ -43,13 +43,6 @@ const productSchema = new Schema(
   { timestamps: true }
 );
 
-// Indexes
-productSchema.index({ sku: 1 }, { unique: true });
-// Only enforce uniqueness when fpHash is a non-empty string
-productSchema.index(
-  { fpHash: 1 },
-  { unique: true, partialFilterExpression: { fpHash: { $type: "string", $ne: "" } } }
-);
 
 // Keep sku canonical and compute fingerprint before validate
 productSchema.pre("validate", function (next) {

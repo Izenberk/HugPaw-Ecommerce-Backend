@@ -1,28 +1,25 @@
-import {Router} from 'express'
-import{
-    createProduct,
-    getProducts,
-    getProductById,
-    updateProduct,
-    deleteProduct
-} from '../../controller/productsController.js'
+// api/v1/routes/productsRoutes.js
+import { Router } from "express";
+import {
+    createProduct, getProducts, getProductById, updateProduct, deleteProduct,
+    variantAvailability, resolveVariant,
+    inventoryAvailability,
+} from "../../controller/productsController.js";
 
 const router = Router();
 
-// Create
+// CRUD
 router.post("/products", createProduct);
-
-// List (supports ?q=, ?attr[Type]=Collar, ?sort=-updatedAt)
 router.get("/products", getProducts);
-
-// Read
 router.get("/products/:id", getProductById);
-
-// Update (partial by default). Keep PATCH, and also expose PUT as an alias.
 router.patch("/products/:id", updateProduct);
 router.put("/products/:id", updateProduct);
-
-// Delete (hard delete)
 router.delete("/products/:id", deleteProduct);
+
+// NEW variant-centric helpers (no DB change)
+router.post("/variants/:sku/availability", variantAvailability);
+router.post("/variants/:sku/resolve", resolveVariant);
+
+router.post("/inventory/availability", inventoryAvailability);
 
 export default router;
