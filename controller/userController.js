@@ -17,9 +17,8 @@ export const getUserById = async (req, res, next) => {
 // Edit profile by Id
 export const editUserById = async (req, res, next) => {
   try {
-    const { id } = req.params; // ✅ ประกาศ id ก่อนใช้
+    const { id } = req.params;
 
-    // ✅ กัน CastError ตั้งแต่ต้น
     if (!isValidObjectId(id)) {
       return res.status(400).json({ error: true, message: "Invalid user id" });
     }
