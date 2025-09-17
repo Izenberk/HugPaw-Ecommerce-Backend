@@ -1,6 +1,6 @@
 import { Schema, model } from "mongoose";
 
-const attributeSchema = new Schema(
+export const attributeSchema = new Schema(
   {
     k: { type: String, required: true },
     v: { type: String, required: true },
@@ -8,7 +8,7 @@ const attributeSchema = new Schema(
   { _id: false }
 );
 
-const productSchema = new Schema(
+export const productSchema = new Schema(
   {
     sku: { type: String, required: true, unique: true },
     attributes: [attributeSchema],
