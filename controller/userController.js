@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import User from "../models/userModel.js";
+import User from "../models/User.js";
 
 // Get profile by Id
 export const getUserById = async (req, res, next) => {

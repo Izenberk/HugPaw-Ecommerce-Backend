@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import { Order } from "../models/Order.js";
 import { Product } from "../models/Product.js"; // เพิ่ม
-import User from "../models/userModel.js"; // เพิ่ม (สำหรับ default address)
+import User from "../models/User.js"; // เพิ่ม (สำหรับ default address)
 
 /* ---------------- Helpers (sync) ---------------- */
 const ALLOWED_PAYMENT_METHODS = ["credit_card", "paypal", "apple_pay"];

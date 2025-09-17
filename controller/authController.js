@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import User from "../models/userModel.js";
+import User from "../models/User.js";
 
 const isProd = process.env.NODE_ENV === "production";
 
