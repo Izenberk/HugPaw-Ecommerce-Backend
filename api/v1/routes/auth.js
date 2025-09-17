@@ -15,20 +15,20 @@ import {
 const router = express.Router();
 
 // User registration
-router.post("/api/v1/auth/signup", signUp);
+router.post("/signup", signUp);
 
 // User login
-router.post("/api/v1/auth/login", login);
+router.post("/login", login);
 
 // User logout
-router.post("/api/v1/auth/logout", requireAuth, requireAuthUser, logOut);
+router.post("/logout", requireAuth, requireAuthUser, logOut);
 
 // Get current user
-router.get("/api/v1/auth/me", requireAuth, requireAuthUser, getCurrentUser);
+router.get("/me", requireAuth, requireAuthUser, getCurrentUser);
 
 // Admin only route (test)
 router.get(
-  "/api/v1/auth/admin",
+  "/admin",
   requireAuth,
   requireAuthUser,
   requireAdmin,

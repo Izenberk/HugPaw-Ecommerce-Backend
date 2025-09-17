@@ -78,8 +78,8 @@ const authLimiter = rateLimit({
 app.use("/api", apiLimiter);
 
 // Routes
-app.use(authRouter, authLimiter);
-app.use(userRouter, authLimiter);
+app.use("/api/v1/auth", authRouter, authLimiter);
+app.use("/api/v1/auth", userRouter, authLimiter);
 app.use("/api", productsRoutes);
 app.use(ordersRoutes);
 
