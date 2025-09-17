@@ -18,9 +18,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "docker:build": "docker build -t hugpaw-api .",
-    "docker:run": "docker run --rm --env-file .env -p 3030:3030 hugpaw-api",
-    "docker:dev": "npm run docker:build && npm run docker:run"
+    "veri": "node --watch sendMail.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -28,7 +26,14 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.18.0"
+    "mongoose": "^8.18.0",
+    "nodemailer": "^7.0.6",
+    "ratelimit": "^0.0.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }
