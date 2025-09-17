@@ -466,24 +466,35 @@ export async function resolveVariant(req, res) {
 // body: { skus: ["ACC-GPS-STD","ACC-LED-CLIP"] }
 export async function inventoryAvailability(req, res) {
   try {
-    const skus = Array.isArray(req.body?.skus) ? req.body.skus : [];
-    if (!skus.length) return res.json({ items: [] });
+    // 1) normalize incoming SKUs (trim + UPPERCASE) and preserve order
+    const rawSkus = Array.isArray(req.body?.skus) ? req.body.skus : [];
+    if (!rawSkus.length) return res.json({ items: [] });
+    const norm = (s) => String(s ?? "").trim();
+    const K = (s) => norm(s).toUpperCase();
+    const skus = rawSkus.map(norm);
+    const skusU = rawSkus.map(K);
 
-    const docs = await Product.find({ sku: { $in: skus } })
-      .select({ sku: 1, stockAmount: 1 })
+    // 2) fetch docs (select unitPrice too)
+    const docs = await Product.find({ sku: { $in: skusU } })
+      .select({ sku: 1, unitPrice: 1, stockAmount: 1 })
       .lean();
 
-    const found = new Map(docs.map(d => [d.sku, d]));
-    const items = skus.map(sku => {
-      const d = found.get(sku);
-      const stock = Number(d?.stockAmount);
-      const finite = Number.isFinite(stock);
+    // 3) map by UPPERCASE SKU for a quick lookup
+    const bySku = new Map(docs.map(d => [K(d.sku), d]));
+
+    // 4) emit items in the same order as requested (using original casing in response)
+    const items = rawSkus.map((reqSku) => {
+      const d = bySku.get(K(reqSku));
+      const stockNum = Number(d?.stockAmount);
+      const finite = Number.isFinite(stockNum);
       return {
-        sku,
-        stock: finite ? stock : null,      // null → unknown/unlimited
-        available: finite ? stock > 0 : true,
+        sku: norm(reqSku),                   // echo back what caller asked
+        unitPrice: d?.unitPrice ?? null,     // <-- include price
+        stockAmount: d?.stockAmount ?? null, // also include raw stock if wanted
+        stock: finite ? stockNum : null,     // keep existing fields
+        available: finite ? stockNum > 0 : true,
       };
-    });
+    })
 
     res.json({ items });
   } catch (e) {
