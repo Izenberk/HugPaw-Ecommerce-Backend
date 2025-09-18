@@ -27,7 +27,7 @@ export const variantsLimiter = rateLimit({
 // auth เข้ม (กัน brute force)
 export const authLimiter = rateLimit({
   windowMs: 10 * 60_000,
-  max: 10,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: true, message: "Too many auth attempts. Try again later." },
