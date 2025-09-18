@@ -1,7 +1,7 @@
 // server/api/v1/controllers/productController.js
-import { Product } from "../../models/Product.js";
+import { Product } from "../../../models/Product.js";
 import mongoose from "mongoose";
-import { computeSkuFromAttributes } from "../../utils/sku.js";
+import { computeSkuFromAttributes } from "../../../utils/sku.js";
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 const rx = (s) => new RegExp(String(s || "").trim(), "i");
@@ -245,7 +245,7 @@ export async function availability(req, res) {
     const product = await getProductByParam(req.params.id);
     if (!product) return res.status(404).json({ error: "Product not found" });
 
-    const selections = req.body?.selections || {};
+    const selections = req.body?.selections ?? req.body?.selected ?? {};
 
     // Pull in-stock + active variants for this product
     const variants = await Variant.find({
@@ -291,7 +291,7 @@ export async function findVariant(req, res) {
     const product = await getProductByParam(req.params.id);
     if (!product) return res.status(404).json({ error: "Product not found" });
 
-    const selections = req.body?.selections || {};
+    const selections = req.body?.selections ?? req.body?.selected ?? {};
 
     // Which singles are required to uniquely identify a variant?
     const requiredSingles = (product.optionGroups || [])
@@ -366,7 +366,7 @@ export async function variantAvailability(req, res) {
     const familyQ = familyPredicateFromAnchor(anchor);
     if (!familyQ) return res.status(404).json({ error: "Family not found" });
 
-    const selections = req.body?.selections || {};
+    const selections = req.body?.selections ?? req.body?.selected ?? {};
 
     // Candidates that are in stock
     const base = { $and: [ familyQ, { stockAmount: { $gt: 0 } } ] };
@@ -434,7 +434,7 @@ export async function resolveVariant(req, res) {
     const familyQ = familyPredicateFromAnchor(anchor);
     if (!familyQ) return res.status(404).json({ found: false });
 
-    const selections = req.body?.selections || {};
+    const selections = req.body?.selections ?? req.body?.selected ?? {};
     const requiredPairs = Object.entries(selections)
       .filter(([, v]) => v != null && v !== "");
     if (!requiredPairs.length) {

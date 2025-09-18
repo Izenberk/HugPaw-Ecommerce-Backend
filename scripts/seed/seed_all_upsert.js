@@ -79,13 +79,18 @@ function upsertMany(docs, label) {
   const POWER = ["DC", "DCB", "USBCPD"];
   const BOWL  = ["BPL", "STS", "CER"];
 
+  // NEW: color codes for feeder SKUs
+  const COLOR_CODE = { White: "WHT", Black: "BLK", Sand: "SND" };
+
   const docs = [];
   for (const s of SIZE) {
     for (const c of COLOR) {
       for (const p of POWER) {
         for (const b of BOWL) {
           docs.push(makeDoc({
-            sku: `FDR-${s}-${c}-${p}-${b}`,
+            // use color code in the SKU
+            sku: `FDR-${s}-${COLOR_CODE[c]}-${p}-${b}`,
+            // keep readable color in attributes
             attrs: kv({ Kind:"Variant", Type:"Feeder", Size:s, Color:c, "Power Mode":p, "Bowl Material":b }),
             unitPrice: 750,
             stockAmount: 75,
@@ -106,13 +111,18 @@ function upsertMany(docs, label) {
   const FILT  = ["STD", "TRI"];
   const POWER = ["USBC", "BAT"];
 
+  // NEW: color codes for water dispenser SKUs
+  const COLOR_CODE = { White: "WHT", Graphite: "GPH", Mint: "MNT" };
+
   const docs = [];
   for (const s of SIZE) {
     for (const c of COLOR) {
       for (const f of FILT) {
         for (const p of POWER) {
           docs.push(makeDoc({
-            sku: `DPS-${s}-${c}-${f}-${p}`,
+            // use color code in the SKU
+            sku: `DPS-${s}-${COLOR_CODE[c]}-${f}-${p}`,
+            // keep readable color in attributes
             attrs: kv({ Kind:"Variant", Type:"Water Dispenser", Size:s, Color:c, Filtration:f, Power:p }),
             unitPrice: 700,
             stockAmount: 80,
@@ -123,6 +133,7 @@ function upsertMany(docs, label) {
   }
   upsertMany(docs, "water");
 })();
+
 
 /* =======================================================
    SMART FEATURES (ADD-ONS)

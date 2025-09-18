@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Order } from "../../models/Order.js";
+import { Order } from "../../../models/order";
 
 // Create a new order
 export const createOrder = async (req, res) => {

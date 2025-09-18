@@ -13,6 +13,7 @@ import productsRoutes from "./api/v1/routes/productsRoutes.js";
 import ordersRoutes from "./api/v1/routes/ordersRoutes.js";
 import authRouter from "./api/v1/routes/auth.js";
 import userRouter from "./api/v1/routes/user.js";
+import { apiLimiter, authLimiter } from "./middleware/limiters.js";
 
 dotenv.config();
 const app = express();
@@ -59,29 +60,14 @@ app.use(cookieParser());
 // Health check route
 app.use(healthRoutes);
 
-// Rate limits
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-const authLimiter = rateLimit({
-  windowMs: 10 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: true, message: "Too many auth attempts. Try again later." },
-});
-
 //Rate limiter
 app.use("/api", apiLimiter);
 
 // Routes
-app.use("/api/v1/auth", authRouter, authLimiter);
-app.use("/api/v1/auth", userRouter, authLimiter);
-app.use("/api", productsRoutes);
-app.use(ordersRoutes);
+app.use("/api/v1/auth", authLimiter, authRouter);
+app.use("/api/v1/auth", authLimiter, userRouter);
+app.use("/api/v1", productsRoutes);
+app.use("/api/v1", ordersRoutes);
 
 // Error Handlers
 app.use(routeNotFound);
