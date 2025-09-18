@@ -3,6 +3,8 @@ import { Product } from "../../../models/Product.js";
 import mongoose from "mongoose";
 import { computeSkuFromAttributes } from "../../../utils/sku.js";
 
+
+
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 const rx = (s) => new RegExp(String(s || "").trim(), "i");
 const isDup = (e, key) => e?.code === 11000 && e?.keyPattern?.[key];
@@ -20,9 +22,17 @@ async function getProductByParam(idOrSlug) {
 
 const hasAttr = (k, v) => ({ attributes: { $elemMatch: { k, v } } });
 
+const K = (s) => String(s || "").trim().toUpperCase();
+
+async function findBySkuCI(sku) {
+  return Product.findOne({ sku: K(sku) })
+    .select({ sku: 1, unitPrice: 1, stockAmount: 1, attributes: 1 })
+    .lean();
+}
+
 // Find the anchor doc by SKU
 async function getAnchor(sku) {
-  return Product.findOne({ sku }).select({ sku: 1, attributes: 1 }).lean();
+  return findBySkuCI(sku);
 }
 
 /* ---------------------- filters: case-insensitive ---------------------- */
@@ -427,23 +437,41 @@ export async function variantAvailability(req, res) {
 // POST /api/variants/:sku/resolve
 export async function resolveVariant(req, res) {
   try {
-    const { sku } = req.params;
-    const anchor = await getAnchor(sku);
-    if (!anchor) return res.status(404).json({ found: false });
+    const rawSku = String(req.params.sku || "");
+    const sku = K(rawSku); // normalize
+
+    // 0) If the SKU is already a concrete variant, return it directly.
+    // This makes the endpoint work for both "anchor" and "full variant" paths.
+    const exact = await findBySkuCI(sku);
+    if (exact) {
+      return res.json({
+        found: true,
+        sku: exact.sku,
+        price: exact.unitPrice,
+        stock: exact.stockAmount,
+        attrs: attrsToObj(exact.attributes),
+        // optional: tag that we matched directly
+        direct: true,
+      });
+    }
+
+    // 1) Otherwise treat it as an anchor (family root) and resolve using selections.
+    const anchor = await getAnchor(sku); // case-insensitive now
+    if (!anchor) return res.status(404).json({ found: false, error: "Anchor SKU not found" });
 
     const familyQ = familyPredicateFromAnchor(anchor);
-    if (!familyQ) return res.status(404).json({ found: false });
+    if (!familyQ) return res.status(404).json({ found: false, error: "Family not found" });
 
     const selections = req.body?.selections ?? req.body?.selected ?? {};
-    const requiredPairs = Object.entries(selections)
-      .filter(([, v]) => v != null && v !== "");
+    const requiredPairs = Object.entries(selections).filter(([, v]) => v != null && v !== "");
     if (!requiredPairs.length) {
+      // For anchor flow, we still require at least one selection
       return res.status(400).json({ found: false, error: "Incomplete selections" });
     }
 
     const selectors = requiredPairs.map(([k, v]) => hasAttr(k, v));
 
-    const doc = await Product.findOne({ $and: [ familyQ, ...selectors ] })
+    const doc = await Product.findOne({ $and: [familyQ, ...selectors] })
       .select({ sku: 1, unitPrice: 1, stockAmount: 1, attributes: 1 })
       .lean();
 
@@ -455,12 +483,14 @@ export async function resolveVariant(req, res) {
       price: doc.unitPrice,
       stock: doc.stockAmount,
       attrs: attrsToObj(doc.attributes),
+      direct: false,
     });
   } catch (e) {
     console.error("resolveVariant error:", e);
     res.status(500).json({ error: "Internal error" });
   }
 }
+
 
 // POST /api/inventory/availability
 // body: { skus: ["ACC-GPS-STD","ACC-LED-CLIP"] }
